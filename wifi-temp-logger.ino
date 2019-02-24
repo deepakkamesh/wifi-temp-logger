@@ -8,6 +8,8 @@
 
 #define MAX_BLYNK_TOKEN_SZ 34
 #define MAX_EEPROM_SZ 100
+#define TEMP_VPIN V1
+#define HUMIDITY_VPIN V2
 
 // Setup DHT11 params.
 #define DHTPIN 2 // GPIO pin connected to DHT11.
@@ -20,27 +22,6 @@ char blynkAuth[] = "";
 
 // Globals.
 bool bSaveConfig = false; // If set config must be saved.
-
-void sendSensor()
-{
-  float h = dht.readHumidity();
-  float t = dht.readTemperature(true); // or dht.readTemperature(true) for Fahrenheit
-
-  if (isnan(h) || isnan(t)) {
-    Serial.println("Failed to read from DHT sensor!");
-    return;
-  }
-  // You can send any value at any time.
-  // Please don't send more that 10 values per second.
-  Blynk.virtualWrite(V5, h);
-  Blynk.virtualWrite(V6, t);
-  Serial.print("Temp:");
-  Serial.print(t);
-  Serial.print("  ");
-  Serial.print("Humidity:");
-  Serial.print( h);
-  Serial.print("\n");
-}
 
 
 void setup()
@@ -55,7 +36,6 @@ void setup()
   if (!readConfigEEPROM(blynkAuth)) {
     Serial.println("EEPROM config not found");
   }
-
 
   WiFiManagerParameter customBlynkAuth("blynk", "blynk auth token", blynkAuth, MAX_BLYNK_TOKEN_SZ);
   WiFiManager wifiManager;
@@ -76,14 +56,6 @@ void setup()
     writeConfigEEPROM(blynkAuth);
   }
 
-  // Manual connection.
-  /* WiFi.begin("utopia", "0d9f48a148");
-    while (WiFi.status() != WL_CONNECTED)
-    {
-     delay(500);
-     Serial.print(".");
-    }*/
-
   Serial.print("Connected to WiFi. Local ip:");
   Serial.println(WiFi.localIP());
 
@@ -97,8 +69,8 @@ void setup()
     ESP.reset();
     delay (5000);
   }
-  Serial.println("Blynk Connected.");
-  timer.setInterval(2000L, sendSensor);
+  Serial.println("Connected to Blynk.");
+  timer.setInterval(2500L, sendSensor);
   EEPROM.end();
 }
 
@@ -142,80 +114,30 @@ void writeConfigEEPROM(char auth[]) {
   Serial.println(auth);
 }
 
-
-
 // Callback notifying us of the need to save config.
 void saveConfigCallback () {
   Serial.println("Should save config");
   bSaveConfig = true;
 }
 
-// readConfig reads config from disk. Returns true if read
-// was successful.
-bool readConfigFromDisk(char auth[]) {
-  if (!SPIFFS.exists("/config.json")) {
-    Serial.println("Config file ./config.json not found.");
-    return false;
-  }
-  File configFile = SPIFFS.open("/config.json", "r");
-  if (!configFile) {
-    Serial.println("Failed to open ./config.");
-    return false;
-  }
-  // Read from config file.
-  size_t size = configFile.size();
-  // Allocate a buffer to store contents of the file.
-  std::unique_ptr<char[]> buf(new char[size]);
+// sendSensor send temp/humidity data to Blynk.
+void sendSensor()
+{
+  float h = dht.readHumidity();
+  float t = dht.readTemperature(true); // or dht.readTemperature(true) for Fahrenheit
 
-  configFile.readBytes(buf.get(), size);
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject& json = jsonBuffer.parseObject(buf.get());
-  json.printTo(Serial);
-  if (!json.success()) {
-    Serial.println("Failed to parse json.");
-    return false;
+  if (isnan(h) || isnan(t)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
   }
-  Serial.println("Config loaded from disk.");
-  strcpy(auth, json["blynk_auth"]);
-  configFile.close();
-}
-
-// saveConfigToDisk saves config to disk.
-void saveConfigToDisk()  {
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject& json = jsonBuffer.createObject();
-  json["blynk_auth"] = blynkAuth;
-
-  File configFile = SPIFFS.open("/config", "w+");
-  if (!configFile) {
-    Serial.println("Failed to open config file for writing");
-    return ;
-  }
-  json.printTo(Serial);
-  json.printTo(configFile);
-  configFile.close();
-  Serial.println("\nSaved config to disk.");
-}
-
-
-// checkFileSystem verifies if FS is ready, if not formats.
-bool checkFileSystem()  {
-  if (SPIFFS.exists("/formatComplete")) {
-    Serial.println("SPIFFS is formatted. Moving along...");
-    return true;
-  }
-
-  Serial.println("Please wait 30 secs for SPIFFS to be formatted");
-  if (!SPIFFS.format()) {
-    Serial.println("Format failed.");
-    return false;
-  }
-  Serial.println("Filesystem formatted");
-
-  File f = SPIFFS.open("/formatComplete", "w");
-  if (!f) {
-    Serial.println("Format complete, but unable to create formatComplete file");
-    return false;
-  }
-  return true;
+  // You can send any value at any time.
+  // Please don't send more that 10 values per second.
+  Blynk.virtualWrite(TEMP_VPIN, t);
+  Blynk.virtualWrite(HUMIDITY_VPIN, h);
+  Serial.print("Temp:");
+  Serial.print(t);
+  Serial.print("  ");
+  Serial.print("Humidity:");
+  Serial.print( h);
+  Serial.print("\n");
 }
