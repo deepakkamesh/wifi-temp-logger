@@ -46,7 +46,7 @@ void setup()
   // Startup devices.
   delay(500);
 #if defined(DEBUG) || defined(DEBUG_V2)
-  Serial.begin(57600);
+  Serial.begin(115200);
 #endif
   dht.begin();
   DEBUG_PRINT("\nStarted...");
@@ -175,8 +175,7 @@ void sendSensor()
     DEBUG_PRINT("Failed to read from DHT sensor!");
     return;
   }
-  // You can send any value at any time.
-  // Please don't send more that 10 values per second.
+
   Blynk.virtualWrite(TEMP_VPIN, t);
   delay(500);
   Blynk.virtualWrite(HUMIDITY_VPIN, h);
