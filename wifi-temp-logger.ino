@@ -6,6 +6,9 @@
 #include <WiFiManager.h>
 #include <BlynkSimpleEsp8266.h>
 
+#define DEBUG
+#define DEBUG_V2
+
 // Setup multiple log levels.
 #ifdef DEBUG
 #define DEBUG_PRINT(x)  Serial.println (x)
@@ -19,11 +22,8 @@
 #define DEBUG_PRINT_V2(x)
 #endif
 
-#define DEBUG
-//#define DEBUG_V2
-
 #define MAX_BLYNK_TOKEN_SZ 34
-#define MAX_EEPROM_SZ 100
+#define MAX_EEPROM_SZ 50
 #define TEMP_VPIN V1
 #define HUMIDITY_VPIN V2
 
@@ -43,12 +43,15 @@ int pushInterval = 5000; // milliseconds to wait between data push.
 void setup()
 {
 
-  // Startup devices.
-  delay(500);
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
+
+  // Tx Serial takes over GPIO1 (LEDBuiltin port). For LED to work
+  // disable DEBUG and DEBUG_V2
+  delay(2000);
 #if defined(DEBUG) || defined(DEBUG_V2)
   Serial.begin(115200);
 #endif
-  dht.begin();
   DEBUG_PRINT("\nStarted...");
   EEPROM.begin(MAX_EEPROM_SZ);
 
@@ -92,11 +95,13 @@ void setup()
   if (!Blynk.connect()) {
     DEBUG_PRINT("Blynk Connection Fail");
     WiFi.disconnect(true);
-    delay (2000);
+    delay (500);
     ESP.reset();
     delay (5000);
   }
   DEBUG_PRINT("Connected to Blynk.");
+
+  dht.begin();
   timer.setInterval(pushInterval, sendSensor);
   EEPROM.end();
 }
@@ -159,11 +164,11 @@ void sendSensor()
   // Verify if blynk is connected. If not reset ESP.
   if (!Blynk.connected()) {
     DEBUG_PRINT("Blynk disconnected. Attempting to connect");
-    delay (1000);
+    delay (500);
     if (!Blynk.connect()) {
       DEBUG_PRINT("Blynk connection failed. Resetting..");
       ESP.reset();
-      delay (2000);
+      delay (5000);
     }
     DEBUG_PRINT("Connected to Blynk");
   }
