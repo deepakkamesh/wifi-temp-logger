@@ -6,8 +6,8 @@
 #include <WiFiManager.h>
 #include <BlynkSimpleEsp8266.h>
 
-#define DEBUG
-#define DEBUG_V2
+//#define DEBUG
+//#define DEBUG_V2
 
 // Setup multiple log levels.
 #ifdef DEBUG
@@ -26,6 +26,9 @@
 #define MAX_EEPROM_SZ 50
 #define TEMP_VPIN V1
 #define HUMIDITY_VPIN V2
+#define LED_ON   digitalWrite(LED_BUILTIN, LOW);
+#define LED_OFF   digitalWrite(LED_BUILTIN, HIGH);
+
 
 // Setup DHT11 params.
 #define DHTPIN 2 // GPIO pin connected to DHT11.
@@ -42,16 +45,15 @@ int pushInterval = 5000; // milliseconds to wait between data push.
 
 void setup()
 {
-
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, LOW);
-
   // Tx Serial takes over GPIO1 (LEDBuiltin port). For LED to work
   // disable DEBUG and DEBUG_V2
-  delay(2000);
 #if defined(DEBUG) || defined(DEBUG_V2)
   Serial.begin(115200);
+#else
+  pinMode(LED_BUILTIN, OUTPUT);
+  LED_ON;
 #endif
+
   DEBUG_PRINT("\nStarted...");
   EEPROM.begin(MAX_EEPROM_SZ);
 
@@ -90,16 +92,19 @@ void setup()
   DEBUG_PRINT(WiFi.localIP());
 
   // Setup and connect to Blynk.
-  delay(1000);
   Blynk.config(blynkAuth);
   if (!Blynk.connect()) {
     DEBUG_PRINT("Blynk Connection Fail");
     WiFi.disconnect(true);
     delay (500);
     ESP.reset();
-    delay (5000);
+    delay (3000);
   }
   DEBUG_PRINT("Connected to Blynk.");
+
+#if !defined(DEBUG) || !defined(DEBUG_V2)
+  LED_OFF;
+#endif
 
   dht.begin();
   timer.setInterval(pushInterval, sendSensor);
