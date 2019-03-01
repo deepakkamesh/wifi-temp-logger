@@ -7,19 +7,20 @@
 #include <BlynkSimpleEsp8266.h>
 
 // Setup multiple log levels.
-#define DEBUG
 #ifdef DEBUG
 #define DEBUG_PRINT(x)  Serial.println (x)
 #else
 #define DEBUG_PRINT(x)
 #endif
 
-//#define DEBUG_V2
 #ifdef DEBUG_V2
 #define DEBUG_PRINT_V2(x)  Serial.println (x)
 #else
 #define DEBUG_PRINT_V2(x)
 #endif
+
+#define DEBUG
+//#define DEBUG_V2
 
 #define MAX_BLYNK_TOKEN_SZ 34
 #define MAX_EEPROM_SZ 100
@@ -44,7 +45,9 @@ void setup()
 
   // Startup devices.
   delay(500);
+#if defined(DEBUG) || defined(DEBUG_V2)
   Serial.begin(57600);
+#endif
   dht.begin();
   DEBUG_PRINT("\nStarted...");
   EEPROM.begin(MAX_EEPROM_SZ);
@@ -155,9 +158,14 @@ void sendSensor()
 {
   // Verify if blynk is connected. If not reset ESP.
   if (!Blynk.connected()) {
-    DEBUG_PRINT("Blynk disconnected. Resetting...");
-    ESP.reset();
-    delay (5000);
+    DEBUG_PRINT("Blynk disconnected. Attempting to connect");
+    delay (1000);
+    if (!Blynk.connect()) {
+      DEBUG_PRINT("Blynk connection failed. Resetting..");
+      ESP.reset();
+      delay (2000);
+    }
+    DEBUG_PRINT("Connected to Blynk");
   }
 
   float h = dht.readHumidity();
