@@ -6,7 +6,8 @@
 
  - The temperature/humidity sensor uses a DHT11 and ESP8266 to measure the readings and sends them via WiFi to a remote server. 
  - The readings can be accessed from a smart phone app from anywhere in the world.
- 
+ ![Screenshot](https://github.com/deepakkamesh/wifi-temp-logger/blob/master/docs/Screenshot.png)
+ - You can also configure the app to send alerts to email if the temperature or humidity goes above or below thresholds. 
 
 ## Schematic
 ![enter image description here](https://github.com/deepakkamesh/wifi-temp-logger/blob/master/schematic.png?raw=true)
@@ -34,5 +35,6 @@
  9. Now wait for about 30 seconds till the blue led turns off. This indicates the configuration was successful. If the blue led continues to be on after 30 seconds, power down and power up and try from step 1 again. 
  10. Open the blynk app and start your project by hitting the play icon (on the top bar that looks like a play button)
  11. If everything went well you should see data from your sensor. 
+ 12. You can customize the Blynk app. For advanced configurations see the [documentation](https://docs.blynk.cc)
 
  
